@@ -43,20 +43,9 @@ if ( $user ) { ?>
 <!-- entry.single -->
 	<div class="single">
 		<div id="primary">
-			<div id="hcalendar-<?php echo $post->slug; ?>" class="vevent">
-				<a href="<?php echo $post->permalink; ?>" class="url">
-					<?php if(strlen($post->info->event_start) > 0) { ?><abbr title="<?php echo date("Ymd\THiO", $post->info->event_start); ?>" class="dtstart"><?php echo date("F jS, Y g:ia", $post->info->event_start); ?></abbr>, <?php } ?>
-					<?php if(strlen($post->info->event_end) > 0) { ?><abbr title="<?php echo date("Ymd\THiO", $post->info->event_end); ?>" class="dtend"><?php echo date("F jS, Y g:ia", $post->info->event_end); ?></abbr><?php } ?>
-					<span class="summary"><?php echo $post->title; ?></span>
-					<?php if(strlen($post->info->event_location) > 0) { ?>– at <span class="location"><?php echo $post->info->event_location; ?></span><?php } ?>
-				</a>
-				<div class="description"><?php echo $post->content_out; ?></div>
-				<div class="tags">Tags: <?php echo $post->tags_out; ?></div>
-			</div>
-
-   </div>
-
-  </div>
+			<?php echo $event_out; ?>
+		</div>
+	</div>
 <!-- /entry.single -->
 
 

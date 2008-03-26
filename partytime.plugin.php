@@ -1,7 +1,5 @@
 <?php
 class partyTime extends Plugin {
-	private $theme= null;
-	
 	function info() {
 		return array(
 			'name' => 'partyTime',
@@ -14,12 +12,18 @@ class partyTime extends Plugin {
 		);
 	}
 	
-	public function action_init() {
-		$this->theme= Themes::create();
-		
+	public function action_init() {		
 		$this->add_template('event.single', dirname(__FILE__) . '/event.single.php');
 		
 		Post::add_new_type('event');
+	}
+	
+	public function action_add_template_vars($theme, $vars) {
+		
+		if(isset($vars['slug'])) {
+			$theme->event = partyTime::get($vars['slug']);
+			$theme->event_out = partyTime::out($vars['slug']);
+		}
 	}
 	
 	public function filter_rewrite_rules( $rules ) {
@@ -44,6 +48,44 @@ class partyTime extends Plugin {
 		
 		exit;
 	}
+	
+	public function get($slug) {
+		$post = Post::get(array('slug' => $slug));
+		
+		
+		if($post->content_type == Post::type('event')) {
+			$return = $post;
+			$return->start = $post->event_start;
+			$return->end = $post->event_end;
+			$return->location = $post->event_location;
+			
+			return $return;
+		} else {
+			return FALSE;
+		}
+		
+	}
+	
+	public function out($slug) {
+		if($event = $this->get($slug)) {
+			return $this->html($event);
+		} else {
+			return FALSE;
+		}
+	}
+	
+	public function html($event) { ?>
+		<div id="hcalendar-<?php echo $event->slug; ?>" class="vevent">
+			<a href="<?php echo $event->permalink; ?>" class="url">
+				<?php if(strlen($event->info->start) > 0) { ?><abbr title="<?php echo date("Ymd\THiO", $event->info->start); ?>" class="dtstart"><?php echo date("F jS, Y g:ia", $post->info->start); ?></abbr>, <?php } ?>
+				<?php if(strlen($event->info->end) > 0) { ?><abbr title="<?php echo date("Ymd\THiO", $event->info->end); ?>" class="dtend"><?php echo date("F jS, Y g:ia", $post->info->end); ?></abbr><?php } ?>
+				<span class="summary"><?php echo $event->title; ?></span>
+				<?php if(strlen($event->info->location) > 0) { ?>– at <span class="location"><?php echo $event->info->location; ?></span><?php } ?>
+			</a>
+			<div class="description"><?php echo $event->content_out; ?></div>
+			<div class="tags">Tags: <?php echo $event->tags_out; ?></div>
+		</div>
+	<?php }
 	
 	public function filter_publish_controls ($controls, $post) {
 		$vars = Controller::get_handler_vars();
