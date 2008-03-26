@@ -15,7 +15,34 @@ class partyTime extends Plugin {
 	}
 	
 	public function action_init() {
+		$this->theme= Themes::create();
+		
+		$this->add_template('event.single', dirname(__FILE__) . '/event.single.php');
+		
 		Post::add_new_type('event');
+	}
+	
+	public function filter_rewrite_rules( $rules ) {
+		$rules[] = new RewriteRule(array(
+			'name' => 'display_event',
+			'parse_regex' => '%event/(?P<slug>.*)[\/]?$%i',
+			'build_str' =>  'event/{$slug}',
+			'handler' => 'UserThemeHandler',
+			'action' => 'display_event',
+			'priority' => 6,
+			'is_active' => 1,
+		));
+		
+		return $rules;
+	}
+	
+	public function action_handler_display_event($vars) {		
+		$post = Post::get(array('slug' => $vars['slug']));
+		
+		$this->theme->assign( 'post', $post);
+		$this->theme->display( 'event.single' );
+		
+		exit;
 	}
 	
 	public function filter_publish_controls ($controls, $post) {
