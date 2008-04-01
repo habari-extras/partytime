@@ -105,7 +105,7 @@ class partyTime extends Plugin {
 			$output .= '" /></p></div>';
 			$output .= '<div class="text container"><p class="column span-5"><label for="event_location">Location:</label></p><p class="column span-14 last"><input type="text" id="event_location" name="event_location" value="' . $post->info->event_location . '" /></p></div>';
 			
-			$controls['Event'] = $output;
+			$controls['Details'] = $output;
 		}
 		
 		return $controls;
