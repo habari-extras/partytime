@@ -114,7 +114,7 @@ class partyTime extends Plugin {
 	public function action_post_update_status( $post, $new_status ) {
 		$vars = Controller::get_handler_vars();
 		
-		if($vars['content_type'] == Post::type('event')) {
+		if($post->content_type == Post::type('event')) {
 			partyTime::set($post);
 		}
 	}
