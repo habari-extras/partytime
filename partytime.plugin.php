@@ -18,6 +18,13 @@ class partyTime extends Plugin {
 		Post::add_new_type('event');
 	}
 	
+	public function action_plugin_deactivation( $file )
+  {
+    if ( realpath( $file ) == __FILE__ ) {
+      Post::deactivate_post_type('event');
+    }
+  }
+	
 	public function action_add_template_vars($theme, $vars) {
 		
 		if(isset($vars['slug'])) {
