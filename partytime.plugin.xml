@@ -1,0 +1,10 @@
+<plugin>
+	<name>partyTime</name>
+	<version>1.0</version>
+	<url>http://myfla.ws/projects/partytime/</url>
+	<author>Arthus Erea</author>
+	<authorurl>http://myfla.ws</authorurl>
+	<license>Creative Commons Attribution-Share Alike 3.0</license>
+	<description>partyTime can be used to share events</description>
+</plugin>
+
