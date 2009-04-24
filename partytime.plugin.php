@@ -3,147 +3,176 @@ class partyTime extends Plugin {
 	function info() {
 		return array(
 			'name' => 'partyTime',
-			'version' => '1.0',
-			'url' => 'http://myfla.ws/projects/partytime/',
-			'author' => 'Arthus Erea',
-			'authorurl' => 'http://myfla.ws',
-			'license' => 'Creative Commons Attribution-Share Alike 3.0',
-			'description' => 'partyTime can be used to share events'
+			'version' => '1.5',
+			'url' => 'http://lab.morgante.net/habari/partytime/',
+			'author' => 'Morgante Pell',
+			'authorurl' => 'http://morgante.net',
+			'license' => 'ASL 2.0',
+			'description' => 'partyTime can be used to share events through Habari'
 		);
 	}
 	
 	public function action_init() {		
-		$this->add_template('event.single', dirname(__FILE__) . '/event.single.php');
 		
+		// Double-check to make sure we have our event type		
 		Post::add_new_type('event');
 	}
 	
-	public function action_plugin_deactivation( $file )
-  {
-    if ( realpath( $file ) == __FILE__ ) {
-      Post::deactivate_post_type('event');
-    }
-  }
-	
-	public function action_add_template_vars($theme, $vars) {
-		
-		if(isset($vars['slug'])) {
-			$theme->event = partyTime::get($vars['slug']);
-			$theme->event_out = partyTime::out($vars['slug']);
-		}
+	/**
+	 * install on activation
+	 */
+	public function action_plugin_activation( $plugin_file )
+	{
+		Post::add_new_type( 'event' );
 	}
 	
-	public function filter_rewrite_rules( $rules ) {
-		$rules[] = new RewriteRule(array(
-			'name' => 'display_event',
-			'parse_regex' => '%event/(?P<slug>.*)[\/]?$%i',
-			'build_str' =>  'event/{$slug}',
-			'handler' => 'UserThemeHandler',
-			'action' => 'display_event',
-			'priority' => 6,
-			'is_active' => 1,
-		));
-		
-		return $rules;
+	/**
+	 * deactivate post type on deactivation
+	 */
+	public function action_plugin_deactivation( $plugin_file )
+	{
+		Post::deactivate_post_type( 'event' );
 	}
 	
-	public function action_handler_display_event($vars) {		
-		$post = Post::get(array('slug' => $vars['slug']));
+	/**
+	 * install:
+	 * - post type
+	 * - permissions
+	 */
+	static public function install() {
+		Post::add_new_type( 'event' );
+		Post::activate_post_type( 'event' );
 		
-		$this->theme->assign( 'post', $post);
-		$this->theme->display( 'event.single' );
-		
-		exit;
+		// Give anonymous users access
+		$group = UserGroup::get_by_name('anonymous');
+		$group->grant('post_link', 'read');
 	}
+	
+	/**
+	 * Create name string
+	 **/
+	public function filter_post_type_display($type, $foruse) 
+	{
+		$names = array( 
+			'event' => array(
+				'singular' => _t('Event'),
+				'plural' => _t('Events'),
+			)
+		); 
+ 		return isset($names[$type][$foruse]) ? $names[$type][$foruse] : $type; 
+	}
+	
+	// public function action_add_template_vars($theme, $vars) {
+	// 	
+	// 	if(isset($vars['slug'])) {
+	// 		$theme->event = partyTime::get($vars['slug']);
+	// 		$theme->event_out = partyTime::out($vars['slug']);
+	// 	}
+	// }
+	
+	// public function filter_rewrite_rules( $rules ) {
+	// 	$rules[] = new RewriteRule(array(
+	// 		'name' => 'display_event',
+	// 		'parse_regex' => '%event/(?P<slug>.*)[\/]?$%i',
+	// 		'build_str' =>  'event/{$slug}',
+	// 		'handler' => 'UserThemeHandler',
+	// 		'action' => 'display_event',
+	// 		'priority' => 6,
+	// 		'is_active' => 1,
+	// 	));
+	// 	
+	// 	return $rules;
+	// }
+	
+	// public function action_handler_display_event($vars) {		
+	// 	$post = Post::get(array('slug' => $vars['slug']));
+	// 	
+	// 	$this->theme->assign( 'post', $post);
+	// 	$this->theme->display( 'event.single' );
+	// 	
+	// 	exit;
+	// }
 	
 	public function get($slug) {
-		$post = Post::get(array('slug' => $slug));
+		$post = Post::get(array('slug' => $slug, 'content_type' => Post::type('event')));
 		
+		return $post;
 		
+	}
+
+	/**
+	 * Modify publish form
+	 */
+	public function action_form_publish($form, $post)
+	{
+		if ($post->content_type == Post::type('event')) {
+			// Change content name
+			$form->content->caption= _t('Description');
+			
+			// Create event tab
+			$event_controls = $form->publish_controls->append('fieldset', 'event_controls', _t('Event'));
+			
+			$event_controls->append('text', 'start', 'null:null', _t('Start Date'), 'tabcontrol_text');
+			$event_controls->start->value = $post->start->format('Y-m-d H:i:s');
+									
+			$event_controls->append('text', 'end', 'null:null', _t('End Date (Optional)'), 'tabcontrol_text');
+			$event_controls->end->value = $post->end->format('Y-m-d H:i:s');
+			
+			$event_controls->append('text', 'location', 'null:null', _t('Location'), 'tabcontrol_text');
+			$event_controls->location->value = $post->location;
+			
+		}
+	}
+	
+	/**
+	 * Save our data to the database
+	 */
+	public function action_publish_post( $post, $form )
+	{
+		if ($post->content_type == Post::type('event')) {
+			$this->action_form_publish($form, $post);
+			
+			$post->info->event_start= HabariDateTime::date_create($form->start->value)->sql;
+			$post->info->event_end= HabariDateTime::date_create($form->end->value)->sql;
+			$post->info->event_location= $form->location->value;
+		}
+	}
+	
+	/**
+	 * filter the dynamic start property of posts
+	 */
+	public function filter_post_start($start_date, $post) {
 		if($post->content_type == Post::type('event')) {
-			$return = $post;
-			$return->start = $post->event_start;
-			$return->end = $post->event_end;
-			$return->location = $post->event_location;
-			
-			return $return;
-		} else {
-			return FALSE;
+			return HabariDateTime::date_create($post->info->event_start);
 		}
-		
-	}
-	
-	public function out($slug) {
-		if($event = $this->get($slug)) {
-			return $this->html($event);
-		} else {
-			return FALSE;
+		else {
+			return $start_date;
 		}
 	}
 	
-	public function html($event) { ?>
-		<div id="hcalendar-<?php echo $event->slug; ?>" class="vevent">
-			<a href="<?php echo $event->permalink; ?>" class="url">
-				<?php if(strlen($event->info->start) > 0) { ?><abbr title="<?php echo date("Ymd\THiO", $event->info->start); ?>" class="dtstart"><?php echo date("F jS, Y g:ia", $post->info->start); ?></abbr>, <?php } ?>
-				<?php if(strlen($event->info->end) > 0) { ?><abbr title="<?php echo date("Ymd\THiO", $event->info->end); ?>" class="dtend"><?php echo date("F jS, Y g:ia", $post->info->end); ?></abbr><?php } ?>
-				<span class="summary"><?php echo $event->title; ?></span>
-				<?php if(strlen($event->info->location) > 0) { ?>– at <span class="location"><?php echo $event->info->location; ?></span><?php } ?>
-			</a>
-			<div class="description"><?php echo $event->content_out; ?></div>
-			<div class="tags">Tags: <?php echo $event->tags_out; ?></div>
-		</div>
-	<?php }
-	
-	public function filter_publish_controls ($controls, $post) {
-		$vars = Controller::get_handler_vars();
-				
-		if($vars['content_type'] == Post::type('event')) {
-			$output = '';
-			
-			$output .= '<div class="text container"><p class="column span-5"><label for="event_start">Starts:</label></p><p class="column span-14 last"><input type="text" id="event_start" name="event_start" value="';
-			if(strlen($post->info->event_start) > 0) {
-				$output .= date('Y-m-d H:i:s', $post->info->event_start);
-			}
-			$output .= '" /></p></div>';
-			$output .= '<div class="text container"><p class="column span-5"><label for="event_end">Ends: <small>Optional</small></label></p><p class="column span-14 last"><input type="text" id="event_end" name="event_end" value="';
-			if(strlen($post->info->event_end) > 0) {
-				$output .= date('Y-m-d H:i:s', $post->info->event_end);
-			}
-			$output .= '" /></p></div>';
-			$output .= '<div class="text container"><p class="column span-5"><label for="event_location">Location:</label></p><p class="column span-14 last"><input type="text" id="event_location" name="event_location" value="' . $post->info->event_location . '" /></p></div>';
-			
-			$controls['Details'] = $output;
-		}
-		
-		return $controls;
-	}
-	
-	public function action_post_update_status( $post, $new_status ) {
-		$vars = Controller::get_handler_vars();
-		
+	/**
+	 * filter the dynamic end property of posts
+	 */
+	public function filter_post_end($end_date, $post) {
 		if($post->content_type == Post::type('event')) {
-			partyTime::set($post);
+			return HabariDateTime::date_create($post->info->event_end);
+		}
+		else {
+			return $end_date;
 		}
 	}
 	
-	function set($post) {
-		$vars = Controller::get_handler_vars();
-		
-		if((strlen($vars['event_start']) > 0) && (strlen($vars['event_end']) > 0)) {
-			$post->info->event_start = strtotime($vars['event_start']);
-			$post->info->event_end = strtotime($vars['event_end']);
-		} elseif((strlen($vars['event_start']) > 0)) {
-			$post->info->event_start = strtotime($vars['event_start']);
-			$post->info->event_end = '';
-		} elseif((strlen($vars['event_end']) > 0)) {
-			$post->info->event_start = strtotime(date('Y-m-d', strtotime($vars['event_end'])));
-			$post->info->event_end = $post->info->event_start + (60*60*24);
+	/**
+	 * filter the dynamic location property of posts
+	 */
+	public function filter_post_location($end_date, $post) {
+		if($post->content_type == Post::type('event')) {
+			return $post->info->event_location;
 		}
-		
-		if(strlen($vars['event_location']) > 0) {
-			$post->info->event_location = $vars['event_location'];
+		else {
+			return $end_date;
 		}
-		
 	}
+	
 }
 ?>
