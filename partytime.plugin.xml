@@ -1,11 +1,11 @@
-<plugin>
-	<name>partyTime</name>
-	<version>1.0</version>
-	<url>http://myfla.ws/projects/partytime/</url>
-	<author>Arthus Erea</author>
-	<authorurl>http://myfla.ws</authorurl>
-	<license>Creative Commons Attribution-Share Alike 3.0</license>
-	<description>partyTime can be used to share events</description>
-</plugin>
-
- 
+<?xml version="1.0" encoding="utf-8" ?> 
+<pluggable type="plugin"> 
+	<name>partyTime</name> 
+	<license url="http://www.apache.org/licenses/LICENSE-2.0.html">Apache Software License 2.0</license> 
+	<author url="http://morgante.net/">Morgante Pell</author>
+	<author url="http://habariproject.org">Habari Community</author> 
+	<version>1.6</version> 
+	<url>http://lab.morgante.net/partytime</url> 
+	<description><![CDATA[Allows the creation of events.]]></description> 
+	<copyright>2010</copyright> 
+</pluggable>

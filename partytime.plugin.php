@@ -1,21 +1,11 @@
 <?php
 class partyTime extends Plugin {
-	function info() {
-		return array(
-			'name' => 'partyTime',
-			'version' => '1.5',
-			'url' => 'http://lab.morgante.net/habari/partytime/',
-			'author' => 'Morgante Pell',
-			'authorurl' => 'http://morgante.net',
-			'license' => 'ASL 2.0',
-			'description' => 'partyTime can be used to share events through Habari'
-		);
-	}
 	
 	public function action_init() {		
 		
 		// Double-check to make sure we have our event type		
 		Post::add_new_type('event');
+			
 	}
 	
 	/**
@@ -45,7 +35,7 @@ class partyTime extends Plugin {
 		
 		// Give anonymous users access
 		$group = UserGroup::get_by_name('anonymous');
-		$group->grant('post_link', 'read');
+		$group->grant('post_event', 'read');
 	}
 	
 	/**
@@ -173,6 +163,52 @@ class partyTime extends Plugin {
 			return $end_date;
 		}
 	}
+	
+	/**
+	 * Filter function called by the plugin hook `rewrite_rules`
+	 * Add a new rewrite rule to the database's rules.
+	 *
+	 *
+	 * @param array $db_rules Array of rewrite rules compiled so far
+	 * @return array Modified rewrite rules array, we added our custom rewrite rule
+	 */
+	public function filter_rewrite_rules( $db_rules )
+	{
+		$db_rules[]= RewriteRule::create_url_rule( '"events"', 'partyTime', 'display_calendar' );
+
+		return $db_rules;
+	}
+	
+	/**
+	 * Act function called by the `Controller` class.
+	 * Dispatches the request to the proper action handling function.
+	 *
+	 * @param string $action Action called by request, we only support 'amcd' and 'host-meta'
+	 */
+	public function act( $action )
+	{
+		switch ( $action )
+		{
+			case 'display_calendar':
+				self::display_calendar();
+				break;
+		}
+	}
+	
+	public function display_calendar()
+	{
+		$theme = Themes::create();
+		
+		$events = Posts::get( array ( "status" => Post::status('published'), "nolimit" => true, "content_type" => Post::type('event') ) );
+		
+		$theme->events = $events;
+		
+		$theme->display('calendar');
+		
+
+	}
+	
+	
 	
 }
 ?>
