@@ -38,6 +38,14 @@ class partyTime extends Plugin {
 		$group->grant('post_event', 'read');
 	}
 	
+	public static function get_events( $params = array() )
+	{
+		$params['content_type'] = Post::type('event');
+		$params['nolimit'] = true;
+		
+		return Posts::get( $params );
+	}
+	
 	/**
 	 * Create name string
 	 **/
