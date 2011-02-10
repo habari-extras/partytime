@@ -215,7 +215,17 @@ class partyTime extends Plugin {
 		
 		$events = Posts::get( array ( "status" => Post::status('published'), "nolimit" => true, "content_type" => Post::type('event') ) );
 		
-		$theme->events = $events;
+		$upcoming = array();
+		
+		foreach( $events as $event )
+		{
+			if( $event->start->int > HabariDateTime::date_create()->modify('-1 week')->int ):
+				$upcoming[] = $event;
+			endif;
+		}
+		
+		
+		$theme->events = $upcoming;
 		
 		$theme->display('calendar');
 		
