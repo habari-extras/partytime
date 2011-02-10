@@ -43,6 +43,12 @@ class partyTime extends Plugin {
 		$params['content_type'] = Post::type('event');
 		$params['nolimit'] = true;
 		
+		if( $params['tag'] != NULL )
+		{
+			$params['vocabulary'] = array( 'tags:term' => $params['tag'] );
+			unset( $params['tags'] );
+		}
+		
 		return Posts::get( $params );
 	}
 	
