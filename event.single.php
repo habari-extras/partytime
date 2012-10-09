@@ -56,7 +56,7 @@ if ( $user ) { ?>
 <hr>
 
 <p id="footer">
- <small><?php Options::out('title'); _e(' is powered by'); ?> <a href="http://www.habariproject.org/" title="Habari">Habari</a> <?php _e('and'); ?> <a href="http://en.wikipedia.org/wiki/Tim_Hortons" title="A large Double Double" rel="nofollow">A large Double Double</a>.</small><br>
+ <small><?php Options::out('title'); _e(' is powered by'); ?> <a href="http://www.habariproject.org/" title="Habari">Habari</a> .</small><br>
  <small><a href="<?php URL::out( 'atom_feed', array( 'index' => '1' ) ); ?>">Atom Entries</a> and <a href="<?php URL::out( 'atom_feed_comments' ); ?>">Atom Comments</a></small>
 </p>
 
